@@ -1,7 +1,7 @@
 # Simple workflow for deploying static content to GitHub Pages
 name: Deploy static content to Pages
 env:
-  PUBLISH_DIR: AINovelistViewer/AINovelistViewer/bin/Release/net9.0/publish/wwwroot
+  PUBLISH_DIR: bin/Release/net9.0/publish/wwwroot
 
 on:
   # Runs on pushes targeting the default branch for the app's folder path
@@ -43,7 +43,7 @@ jobs:
           dotnet-version: '9.0'
 
       - name: Publish app
-        run: dotnet publish AINovelistViewer.csproj -c Release
+        run: dotnet publish AINovelistViewer.csproj -c Release -o ${{ env.PUBLISH_DIR }}
 
       - name: Setup Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
