@@ -74,7 +74,9 @@
 
         var sections = content.Split("<|endofsection|>");
 
-        mainText = System.Text.RegularExpressions.Regex.Replace(sections[0].Replace("<br>", Environment.NewLine), "<.*?>", string.Empty);
+        var rawText = System.Web.HttpUtility.HtmlDecode(sections[0]);
+
+        mainText = System.Text.RegularExpressions.Regex.Replace(rawText.Replace("<br>", Environment.NewLine), "<.*?>", string.Empty);
         memory = sections[1];
         footnote = sections[2];
         paramters = sections[3].Split("<>").ToList();
