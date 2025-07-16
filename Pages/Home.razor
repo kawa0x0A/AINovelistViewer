@@ -14,8 +14,11 @@
     <dl class="row">
         <dt class="col-sm-3">タイトル</dt>
         <dd class="col-sm-9">@title</dd>
-        <dt class="col-sm-3">保存日時</dt>
-        <dd class="col-sm-9">@saveDateTime</dd>
+        @if (saveDateTime.HasValue)
+        {
+            <dt class="col-sm-3">保存日時</dt>
+            <dd class="col-sm-9">@saveDateTime</dd>
+        }
     </dl>
 
     <div class="row row-gap-3">
@@ -39,18 +42,18 @@
 @code {
     private bool isFileLoaded = false;
 
-    private string mainText = "";
-    private string memory = "";
-    private string footnote = "";
+    private string mainText = string.Empty;
+    private string memory = string.Empty;
+    private string footnote = string.Empty;
     private List<string> paramters = new();
-    private string characterBook = "";
-    private string ngWords = "";
-    private string title = "";
+    private string characterBook = string.Empty;
+    private string ngWords = string.Empty;
+    private string title = string.Empty;
     private int id = 0;
-    private string script = "";
-    private string chatTemplate = "";
-    private string uuid = "";
-    private DateTime saveDateTime = DateTime.Now;
+    private string script = string.Empty;
+    private string chatTemplate = string.Empty;
+    private string uuid = string.Empty;
+    private DateTime? saveDateTime = null;
 
     private IJSObjectReference? clipboardObjectReference = null;
     private IJSObjectReference? exportTextObjectReference = null;
@@ -77,17 +80,17 @@
         var rawText = System.Web.HttpUtility.HtmlDecode(sections[0]);
 
         mainText = System.Text.RegularExpressions.Regex.Replace(rawText.Replace("<br>", Environment.NewLine), "<.*?>", string.Empty);
-        memory = sections[1];
-        footnote = sections[2];
-        paramters = sections[3].Split("<>").ToList();
-        characterBook = sections[4];
-        ngWords = sections[5];
-        title = sections[6];
-        id = int.Parse(sections[7]);
-        script = sections[8];
-        chatTemplate = sections[9];
-        uuid = sections[12];
-        saveDateTime = DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(sections[13])).ToLocalTime().DateTime;
+        memory = (sections.Length > 1) ? sections[1] : string.Empty;
+        footnote = (sections.Length > 2) ? sections[2] : string.Empty;
+        paramters = (sections.Length > 3) ? sections[3].Split("<>").ToList() : new();
+        characterBook = (sections.Length > 4) ? sections[4] : string.Empty;
+        ngWords = (sections.Length > 5) ? sections[5] : string.Empty;
+        title = (sections.Length > 6) ? sections[6] : string.Empty;
+        id = ((sections.Length > 7) && (int.TryParse(sections[7], out _))) ? int.Parse(sections[7]) : 0;
+        script = (sections.Length > 8) ? sections[8] : string.Empty;
+        chatTemplate = (sections.Length > 9) ? sections[9] : string.Empty;
+        uuid = (sections.Length > 12) ? sections[12] : string.Empty;
+        saveDateTime = (sections.Length > 13) ? DateTimeOffset.FromUnixTimeMilliseconds(long.Parse(sections[13])).ToLocalTime().DateTime : null;
 
         isFileLoaded = true;
     }
