@@ -1,5 +1,4 @@
 ﻿@page "/"
-@implements IAsyncDisposable
 @inject IJSRuntime JSRuntime
 
 <PageTitle>AINovelistViewer</PageTitle>
@@ -55,9 +54,6 @@
     private string uuid = string.Empty;
     private DateTime? saveDateTime = null;
 
-    private IJSObjectReference? clipboardObjectReference = null;
-    private IJSObjectReference? exportTextObjectReference = null;
-
     private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
         if (e.FileCount == 0)
@@ -97,55 +93,11 @@
 
     private async Task CopyToClipboard()
     {
-        if (clipboardObjectReference is null)
-        {
-            clipboardObjectReference = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/clipboard.js");
-        }
-
-        await clipboardObjectReference.InvokeVoidAsync("copyText", mainText);
+        await JavascriptUtility.CopyToClipboardAsync(JSRuntime, mainText);
     }
 
     private async Task ExportText()
     {
-        if (exportTextObjectReference is null)
-        {
-            exportTextObjectReference = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/file.js");
-        }
-
-        var stream = new MemoryStream();
-        var fileName = $"{title}.txt";
-
-        stream.Write(System.Text.Encoding.UTF8.GetBytes(mainText));
-
-        stream.Seek(0, SeekOrigin.Begin);
-
-        using var streamRef = new DotNetStreamReference(stream);
-
-        await exportTextObjectReference.InvokeVoidAsync("downloadTextFile", fileName, streamRef);
-    }
-
-    async ValueTask IAsyncDisposable.DisposeAsync()
-    {
-        if (clipboardObjectReference is not null)
-        {
-            try
-            {
-                await clipboardObjectReference.DisposeAsync();
-            }
-            catch (JSDisconnectedException)
-            {
-            }
-        }
-
-        if (exportTextObjectReference is not null)
-        {
-            try
-            {
-                await exportTextObjectReference.DisposeAsync();
-            }
-            catch (JSDisconnectedException)
-            {
-            }
-        }
+        await JavascriptUtility.ExportTextAsync(JSRuntime, $"{title}.txt", mainText);
     }
 }
