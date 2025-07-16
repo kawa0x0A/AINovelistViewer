@@ -121,7 +121,7 @@
 
             var a = System.Text.RegularExpressions.Regex.Matches(inputText, regexPattern).Select(match => match.Groups).ToArray();
 
-            extractedText = string.Join(Environment.NewLine, System.Text.RegularExpressions.Regex.Matches(inputText, regexPattern).Select(match => match.Groups.Cast<System.Text.RegularExpressions.Group>().Skip(1).FirstOrDefault(group => group.Success)).Select(g => g.Value));
+            extractedText = string.Join(Environment.NewLine, System.Text.RegularExpressions.Regex.Matches(inputText, regexPattern).Select(match => match.Groups.Cast<System.Text.RegularExpressions.Group>().Skip(1).FirstOrDefault(group => group.Success)).Select(g => g?.Value));
         }
     }
 }
