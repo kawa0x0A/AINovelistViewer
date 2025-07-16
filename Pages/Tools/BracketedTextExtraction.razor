@@ -1,0 +1,127 @@
+﻿@page "/tools/bracketed-text-extraction"
+@inject IJSRuntime JSRuntime
+
+<PageTitle>カッコ内抽出ツール</PageTitle>
+
+<div class="mb-3">
+    <label for="inputText" class="form-label">抽出対象のテキスト:</label>
+    <textarea id="inputText" class="form-control" rows="6" @bind="inputText" @oninput="OnTextChanged"></textarea>
+</div>
+
+<div class="mb-3">
+    <button class="btn btn-outline-secondary me-2" @onclick="PasteFromClipboard">クリップボードから貼り付け</button>
+    <label class="form-label">またはファイルを選択（.txt）:</label>
+    <InputFile OnChange="OnFileSelected" />
+</div>
+
+<div class="mb-3">
+    <label class="form-label">抽出対象のカッコの種類を選択:</label>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="japaneseBrackets" checked="@isUseJapaneseBrackets" @oninput="OnCheckboxChanged1" />
+        <label class="form-check-label" for="japaneseBrackets">「」</label>
+    </div>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="parentheses" checked="@isUseParentheses" @oninput="OnCheckboxChanged2" />
+        <label class="form-check-label" for="parentheses">（）</label>
+    </div>
+</div>
+
+<div class="mb-3">
+    <label for="outputText" class="form-label">抽出結果:</label>
+    <textarea id="outputText" class="form-control" rows="6" readonly>@extractedText</textarea>
+</div>
+
+<div class="mb-3">
+    <button class="btn btn-success me-2" @onclick="CopyToClipboard">結果をクリップボードにコピー</button>
+    <button class="btn btn-primary" @onclick="SaveAsFile">結果をテキストファイルとして保存</button>
+</div>
+
+@code {
+    private string inputText = string.Empty;
+    private string extractedText = string.Empty;
+
+    private bool isUseJapaneseBrackets = true;
+    private bool isUseParentheses = false;
+
+    private void OnTextChanged(ChangeEventArgs e)
+    {
+        ExtractText();
+    }
+
+    private void OnCheckboxChanged1(ChangeEventArgs e)
+    {
+        if (e.Value is bool value)
+        {
+            isUseJapaneseBrackets = value;
+        }
+
+        ExtractText();
+    }
+
+    private void OnCheckboxChanged2(ChangeEventArgs e)
+    {
+        if (e.Value is bool value)
+        {
+            isUseParentheses = value;
+        }
+
+        ExtractText();
+    }
+
+    private async Task PasteFromClipboard()
+    {
+        inputText = await JavascriptUtility.PasteFromClipboardAsync(JSRuntime);
+        ExtractText();
+    }
+
+    private async Task CopyToClipboard()
+    {
+        await JavascriptUtility.CopyToClipboardAsync(JSRuntime, extractedText);
+    }
+
+    private async Task SaveAsFile()
+    {
+        await JavascriptUtility.ExportTextAsync(JSRuntime, "extracted_text.txt", extractedText);
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        if (e.File is null)
+        {
+            return;
+        }
+
+        using var stream = e.File.OpenReadStream();
+        using var reader = new StreamReader(stream);
+        inputText = await reader.ReadToEndAsync();
+        ExtractText();
+    }
+
+    private void ExtractText()
+    {
+        var patterns = new List<string>();
+
+        if (isUseJapaneseBrackets)
+        {
+            patterns.Add("「(.*?)」");
+        }
+
+        if (isUseParentheses)
+        {
+            patterns.Add("\\((.*?)\\)");
+        }
+
+        if (patterns.Count == 0)
+        {
+            extractedText = string.Empty;
+        }
+        else
+        {
+            var regexPattern = string.Join("|", patterns);
+
+            var a = System.Text.RegularExpressions.Regex.Matches(inputText, regexPattern).Select(match => match.Groups).ToArray();
+
+            extractedText = string.Join(Environment.NewLine, System.Text.RegularExpressions.Regex.Matches(inputText, regexPattern).Select(match => match.Groups.Cast<System.Text.RegularExpressions.Group>().Skip(1).FirstOrDefault(group => group.Success)).Select(g => g.Value));
+        }
+    }
+}
