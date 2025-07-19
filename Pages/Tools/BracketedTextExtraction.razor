@@ -27,6 +27,14 @@
 </div>
 
 <div class="mb-3">
+    <label class="form-label">詳細オプション:</label>
+    <div class="form-check">
+        <input class="form-check-input" type="checkbox" id="multiLines" checked="@isMultiLine" @oninput="OnCheckboxChanged3" />
+        <label class="form-check-label" for="multiLines">複数行にまたがるカッコを含む</label>
+    </div>
+</div>
+
+<div class="mb-3">
     <label for="outputText" class="form-label">抽出結果:</label>
     <textarea id="outputText" class="form-control" rows="6" readonly>@extractedText</textarea>
 </div>
@@ -42,6 +50,8 @@
 
     private bool isUseJapaneseBrackets = true;
     private bool isUseParentheses = false;
+
+    private bool isMultiLine = false;
 
     private void OnTextChanged(ChangeEventArgs e)
     {
@@ -63,6 +73,16 @@
         if (e.Value is bool value)
         {
             isUseParentheses = value;
+        }
+
+        ExtractText();
+    }
+
+    private void OnCheckboxChanged3(ChangeEventArgs e)
+    {
+        if (e.Value is bool value)
+        {
+            isMultiLine = value;
         }
 
         ExtractText();
@@ -119,9 +139,9 @@
         {
             var regexPattern = string.Join("|", patterns);
 
-            var a = System.Text.RegularExpressions.Regex.Matches(inputText, regexPattern).Select(match => match.Groups).ToArray();
+            var text = (isMultiLine) ? inputText.Replace("\r", "").Replace("\n", "") : inputText;
 
-            extractedText = string.Join(Environment.NewLine, System.Text.RegularExpressions.Regex.Matches(inputText, regexPattern).Select(match => match.Groups.Cast<System.Text.RegularExpressions.Group>().Skip(1).FirstOrDefault(group => group.Success)).Select(g => g?.Value));
+            extractedText = string.Join(Environment.NewLine, System.Text.RegularExpressions.Regex.Matches(text, regexPattern).Select(match => match.Groups.Cast<System.Text.RegularExpressions.Group>().Skip(1).FirstOrDefault(group => group.Success)).Select(g => g?.Value));
         }
     }
 }
