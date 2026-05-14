@@ -1,0 +1,70 @@
+@page "/tools/blank-line-remove"
+@inject IJSRuntime JSRuntime
+
+<PageTitle>空行削除ツール</PageTitle>
+
+<div class="mb-3">
+    <label for="inputText" class="form-label">抽出対象のテキスト:</label>
+    <textarea id="inputText" class="form-control" rows="6" @bind="inputText" @oninput="OnTextChanged"></textarea>
+</div>
+
+<div class="mb-3">
+    <button class="btn btn-outline-secondary me-2" @onclick="PasteFromClipboard">クリップボードから貼り付け</button>
+    <label class="form-label">またはファイルを選択（.txt）:</label>
+    <InputFile OnChange="OnFileSelected" />
+</div>
+
+<div class="mb-3">
+    <label for="outputText" class="form-label">抽出結果:</label>
+    <textarea id="outputText" class="form-control" rows="6" readonly>@removeBlankLinesText</textarea>
+</div>
+
+<div class="mb-3">
+    <button class="btn btn-success me-2" @onclick="CopyToClipboard">結果をクリップボードにコピー</button>
+    <button class="btn btn-primary" @onclick="SaveAsFile">結果をテキストファイルとして保存</button>
+</div>
+
+@code {
+    private string inputText = string.Empty;
+    private string removeBlankLinesText = string.Empty;
+
+    private void OnTextChanged(ChangeEventArgs e)
+    {
+        RemoveBlankLines();
+    }
+
+    private async Task PasteFromClipboard()
+    {
+        inputText = await JavascriptUtility.PasteFromClipboardAsync(JSRuntime);
+
+        RemoveBlankLines();
+    }
+
+    private async Task CopyToClipboard()
+    {
+        await JavascriptUtility.CopyToClipboardAsync(JSRuntime, removeBlankLinesText);
+    }
+
+    private async Task SaveAsFile()
+    {
+        await JavascriptUtility.ExportTextAsync(JSRuntime, "remove_blank_lines_text.txt", removeBlankLinesText);
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        if (e.File is null)
+        {
+            return;
+        }
+
+        using var stream = e.File.OpenReadStream();
+        using var reader = new StreamReader(stream);
+        inputText = await reader.ReadToEndAsync();
+        RemoveBlankLines();
+    }
+
+    private void RemoveBlankLines()
+    {
+        removeBlankLinesText = inputText.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Aggregate((current, next) => current + Environment.NewLine + next);
+    }
+}
